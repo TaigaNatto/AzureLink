@@ -1,6 +1,36 @@
 package com.example.robop;
 
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceAuthenticationProvider;
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
+import com.microsoft.windowsazure.mobileservices.http.NextServiceFilterCallback;
+import com.microsoft.windowsazure.mobileservices.http.OkHttpClientFactory;
+import com.microsoft.windowsazure.mobileservices.http.ServiceFilter;
+import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
+import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
+import com.microsoft.windowsazure.mobileservices.table.MobileServiceTable;
+import com.microsoft.windowsazure.mobileservices.table.sync.MobileServiceSyncContext;
+import com.microsoft.windowsazure.mobileservices.table.sync.localstore.ColumnDataType;
+import com.microsoft.windowsazure.mobileservices.table.sync.localstore.MobileServiceLocalStoreException;
+import com.microsoft.windowsazure.mobileservices.table.sync.localstore.SQLiteLocalStore;
+import com.microsoft.windowsazure.mobileservices.table.sync.synchandler.SimpleSyncHandler;
+import com.squareup.okhttp.OkHttpClient;
+
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,53 +39,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.microsoft.windowsazure.mobileservices.MobileServiceClient;
-import com.microsoft.windowsazure.mobileservices.http.NextServiceFilterCallback;
-import com.microsoft.windowsazure.mobileservices.http.OkHttpClientFactory;
-import com.microsoft.windowsazure.mobileservices.http.ServiceFilter;
-import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
-import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
-import com.microsoft.windowsazure.mobileservices.table.MobileServiceTable;
-import com.microsoft.windowsazure.mobileservices.table.query.Query;
-import com.microsoft.windowsazure.mobileservices.table.query.QueryOperations;
-import com.microsoft.windowsazure.mobileservices.table.sync.MobileServiceSyncContext;
-import com.microsoft.windowsazure.mobileservices.table.sync.MobileServiceSyncTable;
-import com.microsoft.windowsazure.mobileservices.table.sync.localstore.ColumnDataType;
-import com.microsoft.windowsazure.mobileservices.table.sync.localstore.MobileServiceLocalStoreException;
-import com.microsoft.windowsazure.mobileservices.table.sync.localstore.SQLiteLocalStore;
-import com.microsoft.windowsazure.mobileservices.table.sync.synchandler.SimpleSyncHandler;
-import com.squareup.okhttp.OkHttpClient;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-
-import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceAuthenticationProvider;
-import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
-
-import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperations.*;
+import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperations.val;
 
 public class UserCheckActivity extends Activity {
 
@@ -69,8 +53,17 @@ public class UserCheckActivity extends Activity {
 
     TextView userMaster;
 
+    String UserName;
+
     int allDataNum;
     public static ArrayList<keyManager> datas;
+
+
+    public void addTest(View v){
+        //createTable(UserName);
+        searchDate(UserName);
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,8 +106,15 @@ public class UserCheckActivity extends Activity {
 
             UserCheckActivity.datas=new ArrayList<>();
 
+            //こいつで認証処理を行っている
+            //TODO 認証処理を行う前にrefreshItemsFromTableを呼ばない
+            authenticate();
+
+
             // Load the items from the Mobile Service
             refreshItemsFromTable();
+
+
 
         } catch (MalformedURLException e) {
             createAndShowDialog(new Exception("There was an error creating the Mobile Service. Verify the URL"), "Error");
@@ -122,7 +122,6 @@ public class UserCheckActivity extends Activity {
             createAndShowDialog(e, "oncreError");
         }
 
-        authenticate();
     }
 
     private List<keyManager> refreshItemsFromMobileServiceTable() throws ExecutionException, InterruptedException {
@@ -196,6 +195,7 @@ public class UserCheckActivity extends Activity {
         builder.setMessage(message);
         builder.setTitle(title);
         builder.create().show();
+
     }
     /*********************************/
 
@@ -232,13 +232,22 @@ public class UserCheckActivity extends Activity {
                 } catch (final Exception e){
                     createAndShowDialogFromTask(e, "azureError");
                 }
-
+                mainThreadUI();
                 return null;
             }
         };
 
         runAsyncTask(task);
     }
+    private void mainThreadUI() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                searchDate(UserName);
+            }
+        });
+    }
+
 
     private AsyncTask<Void, Void, Void> runAsyncTask(AsyncTask<Void, Void, Void> task) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -285,10 +294,12 @@ public class UserCheckActivity extends Activity {
             }
             @Override
             public void onSuccess(MobileServiceUser user) {
+                UserName = user.getUserId();
                 createAndShowDialog(String.format(
                         "You are now logged in - %1$2s",
                         user.getUserId()), "Success");
                 createTable(user.getUserId());
+
             }
         });
     }
@@ -303,6 +314,7 @@ public class UserCheckActivity extends Activity {
 
         //てすと
         wantItem.setMaster(false);
+        wantItem.setKeyFlag(true);
         wantItem.setId(name);
 
         //更新+追加
@@ -316,7 +328,7 @@ public class UserCheckActivity extends Activity {
         userMaster=(TextView)findViewById(R.id.master);
 
         userId.setText(name);
-        searchDate(name);
+        //searchDate(name);
 
         // Load the items from Azure.
         refreshItemsFromTable();
@@ -325,12 +337,20 @@ public class UserCheckActivity extends Activity {
     //検索検索～♪
     public void searchDate(String id){
 
+        //TODO ここはdatasの数を取得する処理を書いてfor文を回すほうがスマートです
         for(int i=0;i<allDataNum;i++) {
             if (datas.get(i).getId().equals(id)) {
                 if (datas.get(i).isMaster()) {
                     userMaster.setText("masterです");
+                    //masterページにIntent
+
                 } else {
                     userMaster.setText("userです");
+                    //userにIntent
+                    Intent intent = new Intent();
+                    intent.setClass(this,UserMainActivity.class);
+                    intent.putExtra("userName",UserName);
+                    startActivity(intent);
                 }
             }
         }
