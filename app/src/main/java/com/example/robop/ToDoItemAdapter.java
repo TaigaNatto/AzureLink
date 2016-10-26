@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.Toast;
 
 /**
  * Adapter to bind a ToDoItem List to a view
@@ -23,6 +24,8 @@ public class ToDoItemAdapter extends ArrayAdapter<ToDoItem> {
      */
     int mLayoutResourceId;
 
+    UserCheckAdapter getAItem;
+
     public ToDoItemAdapter(Context context, int layoutResourceId) {
         super(context, layoutResourceId);
 
@@ -34,7 +37,7 @@ public class ToDoItemAdapter extends ArrayAdapter<ToDoItem> {
      * Returns the view for a specific item on the list
      */
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         View row = convertView;
 
         final ToDoItem currentItem = getItem(position);
@@ -61,10 +64,25 @@ public class ToDoItemAdapter extends ArrayAdapter<ToDoItem> {
                         activity.checkItem(currentItem);
                     }
                 }
+
+                //getAItem=new UserCheckAdapter(arg0.getContext(),0);
+
+                getAzure(position,arg0.getContext());
+
             }
         });
 
         return row;
+    }
+
+    public void getAzure(int position,Context context) {
+
+        final ToDoItem listItem = getItem(position);
+
+        String master = listItem.getText();
+
+            Toast.makeText(context, master, Toast.LENGTH_SHORT).show();
+
     }
 
 }

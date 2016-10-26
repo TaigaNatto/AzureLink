@@ -13,6 +13,7 @@ import android.app.AlertDialog;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -55,6 +56,8 @@ import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUse
 import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperations.*;
 
 public class ToDoActivity extends Activity {
+
+    //UserCheckAdapter getAItem;
 
     /**
      * Mobile Service Client reference
@@ -137,6 +140,8 @@ public class ToDoActivity extends Activity {
             ListView listViewToDo = (ListView) findViewById(R.id.listViewToDo);
             listViewToDo.setAdapter(mAdapter);
 
+            //getAItem=new UserCheckAdapter(this,0);
+
             // Load the items from the Mobile Service
             refreshItemsFromTable();
 
@@ -206,7 +211,7 @@ public class ToDoActivity extends Activity {
             }
         };
 
-        Toast.makeText(this, "テスト", Toast.LENGTH_LONG).show();
+
 
         runAsyncTask(task);
 
@@ -228,7 +233,7 @@ public class ToDoActivity extends Activity {
      * @param view
      *            The view that originated the call
      */
-    public void addItem(View view) {
+    public void addItem(final View view) {
         if (mClient == null) {
             return;
         }
@@ -244,7 +249,7 @@ public class ToDoActivity extends Activity {
         // Insert the new item
         AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
             @Override
-            protected Void doInBackground(Void... params) {
+            protected Void doInBackground(final Void... params) {
                 try {
                     final ToDoItem entity = addItemInTable(item);
 
@@ -306,6 +311,7 @@ public class ToDoActivity extends Activity {
 
                             for (ToDoItem item : results) {
                                 mAdapter.add(item);
+                                Log.d("abcdef",item.getText());
                             }
                         }
                     });
