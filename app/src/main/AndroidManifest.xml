@@ -28,7 +28,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".ToDoActivity" />
-        <activity android:name=".UserMainActivity"></activity>
+        <activity android:name=".UserMainActivity" />
+        <activity android:name=".MasterMainActivity"></activity>
     </application>
 
 </manifest>

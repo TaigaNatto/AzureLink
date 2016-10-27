@@ -75,7 +75,7 @@ public class UserCheckActivity extends Activity {
 
             // Mobile Service URL and key
             mClient = new MobileServiceClient(
-                    "https://robop.azurewebsites.net",
+                    "https://robop-keymanager.azurewebsites.net",
                     this).withFilter(new UserCheckActivity.ProgressFilter());
 
             // Extend timeout from default of 10s to 20s
@@ -343,6 +343,10 @@ public class UserCheckActivity extends Activity {
                 if (datas.get(i).isMaster()) {
                     userMaster.setText("masterです");
                     //masterページにIntent
+                    Intent intent = new Intent();
+                    intent.setClass(this,MasterMainActivity.class);
+                    //intent.putExtra("userName",UserName);
+                    startActivity(intent);
 
                 } else {
                     userMaster.setText("userです");
